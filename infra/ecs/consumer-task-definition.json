@@ -1,0 +1,36 @@
+{
+  "family": "dev-skill-tracker-consumer",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::<account-id>:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "consumer-service",
+      "image": "<account-id>.dkr.ecr.us-east-1.amazonaws.com/dev-skill-tracker-consumer:latest",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8082, "protocol": "tcp" }],
+      "environment": [
+        { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "<msk-or-kafka-endpoint>:9092" },
+        { "name": "SPRING_R2DBC_URL", "value": "r2dbc:postgresql://<rds-endpoint>:5432/devskill" },
+        { "name": "SPRING_FLYWAY_URL", "value": "jdbc:postgresql://<rds-endpoint>:5432/devskill" },
+        { "name": "POSTGRES_USER", "value": "devskill" }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:ssm:us-east-1:<account-id>:parameter/dev-skill-tracker/postgres-password"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/dev-skill-tracker",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "consumer"
+        }
+      }
+    }
+  ]
+}
